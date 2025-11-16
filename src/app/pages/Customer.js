@@ -68,7 +68,7 @@ import useCustomToast from '../hooks/useToast';
 import { TEXT_CONNECTION_ERROR } from '../utilities/Text';
 import { formatCreatedAtDate,formatNumberWithComma } from '../utilities/Functions';
 import CustomerDetails from './CustomerDetails';
-import { PERMISSIONS, ROLE_PERMISSIONS } from '../utilities/Permission';
+import {ROLE_PERMISSIONS } from '../utilities/Permission';
 import { customerService } from '../services/customerService';
 
 const Customer = () => {
@@ -81,11 +81,13 @@ const Customer = () => {
     const [currentView, setCurrentView] = useState("LISTING");
     const [clientNumberId, setClientNumberId] = useState("");
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const [validationTimeout, setValidationTimeout] = useState(null);
 
     // State for table data and pagination
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(25);
     const [searchTerm, setSearchTerm] = useState('');
+
     const [filters, setFilters] = useState({
         name: '', email: '', phone: '', company_name: '', tax_number: ''
     });
@@ -121,7 +123,7 @@ const Customer = () => {
 
     // Permissions
     const [userRole, setUserRole] = useState('');
-    
+
     useEffect(() => {
         const getUserRole = () => {
             try {
@@ -146,6 +148,15 @@ const Customer = () => {
         customerService.setToastFunction(showToast);
         fetchCustomers();
     }, []);
+
+    // Clean up timeout on component unmount
+    useEffect(() => {
+        return () => {
+            if (validationTimeout) {
+                clearTimeout(validationTimeout);
+            }
+        };
+    }, [validationTimeout]);
 
     const fetchCustomers = async () => {
         setLoading(true);
@@ -188,13 +199,13 @@ const Customer = () => {
         const matchesPhone = !filters.phone || 
             customer.phone?.toLowerCase().includes(filters.phone.toLowerCase());
 
-        const matchesCompany = !filters.company_name || 
+        const matchesCompany = !filters.company_name ||
             customer.company_name?.toLowerCase().includes(filters.company_name.toLowerCase());
 
-        const matchesTaxNumber = !filters.tax_number || 
+        const matchesTaxNumber = !filters.tax_number ||
             customer.tax_number?.toLowerCase().includes(filters.tax_number.toLowerCase());
 
-        return matchesSearch && matchesName && matchesEmail && 
+        return matchesSearch && matchesName && matchesEmail &&
             matchesPhone && matchesCompany && matchesTaxNumber;
     });
 
@@ -275,54 +286,53 @@ const Customer = () => {
     };
 
     // Form handlers
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        
-        // Reset error for this field
-        setErrors(prev => ({
-            ...prev,
-            [name]: false
-        }));
-        
-        // Field-specific validation
-        if (name === 'email') {
-            // Basic email validation
-            if (value === '' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-                setFormData(prev => ({
-                    ...prev,
-                    [name]: value
-                }));
-            } else {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Reset error for this field
+    setErrors(prev => ({
+        ...prev,
+        [name]: false
+    }));
+    
+    // Update form data immediately
+    setFormData(prev => ({
+        ...prev,
+        [name]: value
+    }));
+    
+    // Clear any existing timeout
+    if (validationTimeout) {
+        clearTimeout(validationTimeout);
+    }
+    
+    // Field-specific validation with debounce
+    if (name === 'email' && value) {
+        // Set a timeout to validate after user stops typing
+        const timeout = setTimeout(() => {
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
                 setErrors(prev => ({
                     ...prev,
                     [name]: true
                 }));
-                showToast("Validation Error", "Please enter a valid email address", "error");
-                return;
             }
-        } else if (name === 'phone') {
-            // Allow numbers, spaces, and common phone characters
-            if (value === '' || /^[0-9+\-\s()]*$/.test(value)) {
-                setFormData(prev => ({
-                    ...prev,
-                    [name]: value
-                }));
-            } else {
+        }, 1000); // Wait 1 second after user stops typing
+        
+        setValidationTimeout(timeout);
+    } else if (name === 'phone' && value) {
+        const timeout = setTimeout(() => {
+            if (!/^[0-9+\-\s()]*$/.test(value)) {
                 setErrors(prev => ({
                     ...prev,
                     [name]: true
                 }));
-                showToast("Validation Error", "Please enter a valid phone number", "error");
-                return;
             }
-        } else {
-            // For other fields
-            setFormData(prev => ({
-                ...prev,
-                [name]: value
-            }));
-        }
-    };
+        }, 1000);
+        
+        setValidationTimeout(timeout);
+    }
+};
+
 
     // Filter handlers
     const handleFilterChange = (e) => {

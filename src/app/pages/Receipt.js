@@ -1412,431 +1412,456 @@ return (
     );
 };
 
-    // Receipt Template Component
-    const ReceiptTemplate = ({ receipt, invoiceTotal, forPDF = false }) => {
-        // const totalAmount = receipt.items?.reduce((sum, item) => sum + (item.amount || 0), 0) || 0;
 
-        return (
-            <Box sx={{ 
-                fontFamily: 'Arial, sans-serif', 
-                color: 'text.primary',
-                width: forPDF ? '210mm' : '100%',
-                minHeight: forPDF ? '297mm' : 'auto',
-                padding: forPDF ? '20mm' : '0',
-                backgroundColor: 'white'
+    // Receipt Template Component
+    // Receipt Template Component
+const ReceiptTemplate = ({ receipt, invoiceTotal, forPDF = false }) => {
+    // Add this inside the ReceiptTemplate component for debugging
+    // Calculate the invoice total from the receipt data structure
+    const getInvoiceTotal = () => {
+        // First priority: Use the explicitly passed invoiceTotal prop
+        if (invoiceTotal !== undefined && invoiceTotal !== null && invoiceTotal !== 0) {
+        return invoiceTotal;
+        }
+        // Second priority: Use receipt.invoice_total if available
+        if (receipt.invoice_total && receipt.invoice_total !== 0) {
+        return receipt.invoice_total;
+        }
+        // Third priority: Use receipt.invoice?.total if available (from nested invoice object)
+        if (receipt.invoice?.total && receipt.invoice.total !== 0) {
+        return receipt.invoice.total;
+        }
+        // Fourth priority: Use receipt.invoice_total from the main receipt object
+        if (receipt.invoice_total !== undefined && receipt.invoice_total !== null) {
+        return receipt.invoice_total;
+        }
+        // Fallback: Calculate from items or use 0
+        return receipt.items?.reduce((sum, item) => sum + parseFloat(item.amount || 0), 0) || 0;
+    };
+
+    const totalInvoiceAmount = getInvoiceTotal();
+
+    console.log('ReceiptTemplate - calculated totalInvoiceAmount:', totalInvoiceAmount);
+
+    return (
+        <Box sx={{
+        fontFamily: 'Arial, sans-serif',
+        color: 'text.primary',
+        width: forPDF ? '210mm' : '100%',
+        minHeight: forPDF ? '297mm' : 'auto',
+        padding: forPDF ? '20mm' : '0',
+        backgroundColor: 'white'
+        }}>
+        {/* Company Header */}
+        <Box sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            mb: 4,
+            pb: 2,
+            borderBottom: '3px solid',
+            borderColor: '#0d83fd !important'
+        }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+                component="img"
+                src={MogasoftLog}
+                alt="Company Logo"
+                sx={{
+                width: 80,
+                height: 80,
+                objectFit: 'contain',
+                p: 1,
+                }}
+                onError={(e) => {
+                e.target.style.display = 'none';
+                }}
+            />
+            <Box>
+                <Typography variant="h5" fontWeight="bold" sx={{ color: '#059652 !important' }}>
+                {companyInfo.name}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#059652 !important' }}>
+                Custom Software, Websites, <br />Web & Mobile Apps <br /> Development
+                </Typography>
+            </Box>
+            </Box>
+
+            <Box sx={{ textAlign: 'right' }}>
+            <List dense sx={{ padding: 0 }}>
+                <ListItem sx={{ px: 0, py: 0.5 }}>
+                <ListItemIcon sx={{ minWidth: 32, color: '#059652' }}>
+                    <LocationIcon fontSize="small" />
+                </ListItemIcon>
+                <Typography variant="body2" sx={{ color: '#059652 !important' }}>
+                    {companyInfo.address}
+                </Typography>
+                </ListItem>
+                <ListItem sx={{ px: 0, py: 0.5 }}>
+                <ListItemIcon sx={{ minWidth: 32, color: '#059652' }}>
+                    <PhoneIcon fontSize="small" />
+                </ListItemIcon>
+                <Typography variant="body2" sx={{ color: '#059652 !important' }}>
+                    {companyInfo.phone}
+                </Typography>
+                </ListItem>
+                <ListItem sx={{ px: 0, py: 0.5 }}>
+                <ListItemIcon sx={{ minWidth: 32, color: '#059652' }}>
+                    <EmailIcon fontSize="small" />
+                </ListItemIcon>
+                <Typography variant="body2" sx={{ color: '#059652 !important' }}>
+                    {companyInfo.email}
+                </Typography>
+                </ListItem>
+                <ListItem sx={{ px: 0, py: 0.5 }}>
+                <ListItemIcon sx={{ minWidth: 32, color: '#059652' }}>
+                    <LanguageIcon fontSize="small" />
+                </ListItemIcon>
+                <Typography variant="body2" sx={{ color: '#059652 !important' }}>
+                    {companyInfo.website}
+                </Typography>
+                </ListItem>
+            </List>
+            </Box>
+        </Box>
+
+        {/* Receipt Title */}
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Typography variant="h4" fontWeight="bold" sx={{ color: '#0d83fd !important' }} gutterBottom>
+            PAYMENT RECEIPT
+            </Typography>
+        </Box>
+
+        {/* Receipt Details */}
+        <Grid container spacing={4} sx={{ mb: 4, display: 'flex', justifyContent: 'space-between' }}>
+            <Grid item xs={8}>
+            <Typography variant="h6" gutterBottom sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                color: '#0d83fd !important',
             }}>
-                {/* Company Header */}
+                Received From:
+            </Typography>
+            <Box sx={{ pl: 1 }}>
+                <Typography variant="body1" fontWeight="bold" gutterBottom sx={{ color: '#0d83fd !important' }} data-customer-name>
+                <PersonIcon />
+                {receipt.customer_name || receipt.customer?.name || 'Customer Name'}
+                </Typography>
+                {(receipt.customer_email || receipt.customer?.email)  && (
+                <Typography variant="body2" gutterBottom sx={{
+                    display: 'flex', 
+                    alignItems: 'center',
+                    gap: 1,
+                    color: '#0d83fd !important',
+                }} data-customer-email>
+                    <EmailIcon fontSize="small" />
+                    {receipt.customer_email || receipt.customer?.email}
+                </Typography>
+                )}
+                {(receipt.customer_phone || receipt.customer?.phone) && (
+                <Typography variant="body2" gutterBottom sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    color: '#0d83fd !important',
+                }} data-customer-phone>
+                    <PhoneIcon fontSize="small" />
+                    {receipt.customer_phone || receipt.customer?.phone}
+                </Typography>
+                )}
+                {(receipt.customer_address  || receipt.customer?.address) && (
+                <Typography variant="body2" sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    color: '#0d83fd !important',
+                }} data-customer-address>
+                    <LocationIcon fontSize="small" />
+                    {receipt.customer_address || receipt.customer?.address}
+                </Typography>
+                )}
+            </Box>
+            </Grid>
+
+            <Grid item xs={4} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Box sx={{ 
+                p: 2, 
+                borderRadius: 2,
+                textAlign: 'right',
+                marginLeft: 'auto',
+                width: 'fit-content',
+                backgroundColor: '#f5f5f5 !important',
+            }}>
+                <Typography variant="body2" gutterBottom sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                justifyContent: 'flex-start',
+                color: '#0d83fd !important'
+                }}>
+                <DateIcon fontSize="small" />
+                <strong>Date:</strong> {receipt.date}
+                </Typography>
+                <Typography variant="body2" gutterBottom sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: 1,
+                justifyContent: 'flex-start',
+                color: '#0d83fd !important',
+                }}>
+                <ReceiptIcon fontSize="small" />
+                <strong>Receipt #:</strong> {receipt.receipt_number || 'Pending'}
+                </Typography>
+                {receipt.invoice_number && (
+                <Typography variant="body2" gutterBottom sx={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 1,
+                    justifyContent: 'flex-start',
+                    color: '#0d83fd !important',
+                }}>
+                    <PaymentIcon fontSize="small" />
+                    <strong>Invoice #:</strong> {receipt.invoice_number}
+                </Typography>
+                )}
+            </Box>
+            </Grid>
+        </Grid>
+
+        {/* Payment Details */}
+        <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ color: '#0d83fd !important' }}>
+            Payment Details
+            </Typography>
+            <Grid container spacing={2}>
+            <Grid item xs={6}>
+                <Typography sx={{ color: '#0d83fd !important' }}><strong>Payment Method:</strong></Typography>
+                <Typography>
+                {receipt.payment_method ? 
+                    receipt.payment_method.charAt(0).toUpperCase() + receipt.payment_method.slice(1).replace('_', ' ') 
+                    : 'Cash'
+                }
+                </Typography>
+            </Grid>
+            {receipt.transaction_id && (
+                <Grid item xs={6}>
+                <Typography sx={{ color: '#0d83fd !important' }}><strong>Transaction ID:</strong></Typography>
+                <Typography>{receipt.transaction_id}</Typography>
+                </Grid>
+            )}
+            {receipt.bank_name && (
+                <Grid item xs={6}>
+                <Typography sx={{ color: '#0d83fd !important' }}><strong>Bank Name:</strong></Typography>
+                <Typography>{receipt.bank_name}</Typography>
+                </Grid>
+            )}
+            {receipt.check_number && (
+                <Grid item xs={6}>
+                <Typography sx={{ color: '#0d83fd !important' }}><strong>Check Number:</strong></Typography>
+                <Typography>{receipt.check_number}</Typography>
+                </Grid>
+            )}
+            {receipt.mobile_number && (
+                <Grid item xs={6}>
+                <Typography sx={{ color: '#0d83fd !important' }}><strong>Mobile Number:</strong></Typography>
+                <Typography>{receipt.mobile_number}</Typography>
+                </Grid>
+            )}
+            {receipt.received_by && (
+                <Grid item xs={6}>
+                <Typography sx={{ color: '#0d83fd !important' }}><strong>Received By:</strong></Typography>
+                <Typography>{receipt.received_by}</Typography>
+                </Grid>
+            )}
+            </Grid>
+        </Box>
+
+        {/* Payment Items Table */}
+        <TableContainer component={Paper} elevation={forPDF ? 0 : 1} sx={{ mb: 4 }}>
+            <Table>
+            <TableHead>
+                <TableRow sx={{ backgroundColor: '#0d4991 !important' }}>
+                <TableCell sx={{
+                    color: 'white !important',
+                    fontWeight: 'bold',
+                    border: 1,
+                    padding: '16px 12px',
+                    fontSize: '14px',
+                    borderRight: '2px solid #ffffff !important',
+                    borderLeft: '2px solid #0d4991 !important',
+                    borderBottom: '2px solid #0d4991 !important',
+                    borderTop: '2px solid #0d4991 !important',
+                }}>
+                    Description
+                </TableCell>
+                <TableCell sx={{
+                    color: 'white !important',
+                    fontWeight: 'bold',
+                    border: 1,
+                    padding: '16px 12px',
+                    fontSize: '14px',
+                    borderRight: '2px solid #0d4991 !important',
+                    borderBottom: '2px solid #0d4991 !important',
+                    borderTop: '2px solid #0d4991 !important',
+                }} align="right">
+                    Amount
+                </TableCell>
+                </TableRow>
+            </TableHead>
+            <TableBody>
+                {receipt.items?.map((item, index) => (
+                <TableRow key={index} sx={{ backgroundColor: '#EFF8FF !important' }}>
+                    <TableCell sx={{ 
+                    padding: '12px', 
+                    color: '#000000 !important',
+                    borderBottom: '2px solid #0d4991 !important',
+                    borderLeft: '2px solid #0d4991 !important'
+                    }}>
+                    {item.description || 'Payment item'}
+                    </TableCell>
+                    <TableCell sx={{ 
+                    padding: '12px', 
+                    color: '#000000 !important',
+                    borderRight: '2px solid #0d4991 !important',
+                    borderBottom: '2px solid #0d4991 !important',
+                    }} align="right">
+                    {formatNumberWithComma(item.amount)}
+                    </TableCell>
+                </TableRow>
+                ))}
+            </TableBody>
+            </Table>
+        </TableContainer>
+
+        {/* Totals Section - Table Style */}
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
+            <Box sx={{ 
+            width: 300, 
+            border: '2px solid #0d4991 !important',
+            borderRadius: 1,
+            overflow: 'hidden',
+            backgroundColor: 'white'
+            }}>
+            {/* Table Header */}
+            <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                p: 1.5,
+                backgroundColor: '#0d4991 !important',
+                borderBottom: '2px solid #0d4991 !important'
+            }}>
+                <Typography sx={{ color: 'white !important', fontWeight: 'bold', fontSize: '16px' }}>
+                PAYMENT SUMMARY
+                </Typography>
+            </Box>
+
+            {/* Table Rows */}
+            <Box sx={{ p: 0 }}>
+                {/* Invoice Total Row */}
+                <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                p: 1.5,
+                borderBottom: '1px solid #e0e0e0 !important'
+                }}>
+                <Typography sx={{ color: '#0d83fd !important', fontWeight: 'bold' }}>
+                    Invoice Total:
+                </Typography>
+                <Typography sx={{ color: '#0d83fd !important', fontWeight: 'bold' }}>
+                    {formatNumberWithComma(totalInvoiceAmount)}
+                </Typography>
+                </Box>
+                
+                {/* Amount Paid Row */}
+                <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                p: 1.5,
+                borderBottom: receipt.balance > 0 ? '1px solid #e0e0e0 !important' : '2px solid #0d4991 !important',
+                backgroundColor: receipt.balance === 0 ? '#f8fff8 !important' : 'transparent'
+                }}>
+                <Typography sx={{ color: '#0d83fd !important', fontWeight: 'bold' }}>
+                    Amount Paid:
+                </Typography>
+                <Typography sx={{ color: '#059652 !important', fontWeight: 'bold', fontSize: '18px' }}>
+                    {formatNumberWithComma(receipt.amount_paid)}
+                </Typography>
+                </Box>
+                
+                {/* Balance Due Row */}
+                {receipt.balance > 0 && (
                 <Box sx={{ 
                     display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'flex-start', 
-                    mb: 4, 
-                    pb: 2, 
-                    borderBottom: '3px solid', 
-                    borderColor: '#0d83fd !important'
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    p: 1.5,
+                    borderBottom: '2px solid #0d4991 !important',
+                    backgroundColor: '#fffaf0 !important'
                 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Box
-                            component="img"
-                            src={MogasoftLog}
-                            alt="Company Logo"
-                            sx={{
-                                width: 80,
-                                height: 80,
-                                objectFit: 'contain',
-                                p: 1,
-                            }}
-                            onError={(e) => {
-                                e.target.style.display = 'none';
-                            }}
-                        />
-                        <Box>
-                            <Typography variant="h5" fontWeight="bold" sx={{ color: '#059652 !important' }}>
-                                {companyInfo.name}
-                            </Typography>
-                            <Typography variant="body2" sx={{ color: '#059652 !important' }}>
-                                Custom Software, Websites, <br />Web & Mobile Apps <br /> Development
-                            </Typography>
-                        </Box>
-                    </Box>
-                    
-                    <Box sx={{ textAlign: 'right' }}>
-                        <List dense sx={{ padding: 0 }}>
-                            <ListItem sx={{ px: 0, py: 0.5 }}>
-                                <ListItemIcon sx={{ minWidth: 32, color: '#059652' }}>
-                                    <LocationIcon fontSize="small" />
-                                </ListItemIcon>
-                                <Typography variant="body2" sx={{ color: '#059652 !important' }}>
-                                    {companyInfo.address}
-                                </Typography>
-                            </ListItem>
-                            <ListItem sx={{ px: 0, py: 0.5 }}>
-                                <ListItemIcon sx={{ minWidth: 32, color: '#059652' }}>
-                                    <PhoneIcon fontSize="small" />
-                                </ListItemIcon>
-                                <Typography variant="body2" sx={{ color: '#059652 !important' }}>
-                                    {companyInfo.phone}
-                                </Typography>
-                            </ListItem>
-                            <ListItem sx={{ px: 0, py: 0.5 }}>
-                                <ListItemIcon sx={{ minWidth: 32, color: '#059652' }}>
-                                    <EmailIcon fontSize="small" />
-                                </ListItemIcon>
-                                <Typography variant="body2" sx={{ color: '#059652 !important' }}>
-                                    {companyInfo.email}
-                                </Typography>
-                            </ListItem>
-                            <ListItem sx={{ px: 0, py: 0.5 }}>
-                                <ListItemIcon sx={{ minWidth: 32, color: '#059652' }}>
-                                    <LanguageIcon fontSize="small" />
-                                </ListItemIcon>
-                                <Typography variant="body2" sx={{ color: '#059652 !important' }}>
-                                    {companyInfo.website}
-                                </Typography>
-                            </ListItem>
-                        </List>
-                    </Box>
-                </Box>
-
-                {/* Receipt Title */}
-                <Box sx={{ textAlign: 'center', mb: 4 }}>
-                    <Typography variant="h4" fontWeight="bold" sx={{ color: '#0d83fd !important' }} gutterBottom>
-                        PAYMENT RECEIPT
+                    <Typography sx={{ color: '#0d83fd !important', fontWeight: 'bold' }}>
+                    Balance Due:
                     </Typography>
-                    {/* <Typography variant="h6" sx={{ color: '#0d83fd !important' }}>
-                        Receipt #: {receipt.receipt_number || 'Pending'}
-                    </Typography> */}
-                </Box>
-
-                {/* Receipt Details */}
-                <Grid container spacing={4} sx={{ mb: 4, display: 'flex', justifyContent: 'space-between' }}>
-                    <Grid item xs={8}>
-                        <Typography variant="h6" gutterBottom sx={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            gap: 1,
-                            color: '#0d83fd !important',
-                        }}>
-                            Received From:
-                        </Typography>
-                        <Box sx={{ pl: 1 }}>
-                            <Typography variant="body1" fontWeight="bold" gutterBottom sx={{ color: '#0d83fd !important' }} data-customer-name>
-                                <PersonIcon />
-                                {receipt.customer_name || receipt.customer?.name || 'Customer Name'}
-                            </Typography>
-                            {(receipt.customer_email || receipt.customer?.email)  && (
-                                <Typography variant="body2" gutterBottom sx={{
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: 1,
-                                    color: '#0d83fd !important',
-                                }} data-customer-email>
-                                    <EmailIcon fontSize="small" />
-                                    {receipt.customer_email || receipt.customer?.email}
-                                </Typography>
-                            )}
-                            {(receipt.customer_phone || receipt.customer?.phone) && (
-                                <Typography variant="body2" gutterBottom sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: 1,
-                                    color: '#0d83fd !important',
-                                }} data-customer-phone>
-                                    <PhoneIcon fontSize="small" />
-                                    {receipt.customer_phone || receipt.customer?.phone}
-                                </Typography>
-                            )}
-                            {(receipt.customer_address  || receipt.customer?.address) && (
-                                <Typography variant="body2" sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 1,
-                                    color: '#0d83fd !important',
-                                }} data-customer-address>
-                                    <LocationIcon fontSize="small" />
-                                    {receipt.customer_address || receipt.customer?.address}
-                                </Typography>
-                            )}
-                        </Box>
-                    </Grid>
-
-                    <Grid item xs={4} sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                        <Box sx={{ 
-                            p: 2, 
-                            borderRadius: 2,
-                            textAlign: 'right',
-                            marginLeft: 'auto',
-                            width: 'fit-content',
-                            backgroundColor: '#f5f5f5 !important',
-                        }}>
-                            <Typography variant="body2" gutterBottom sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 1,
-                                justifyContent: 'flex-start',
-                                color: '#0d83fd !important'
-                            }}>
-                                <DateIcon fontSize="small" />
-                                <strong>Date:</strong> {receipt.date}
-                            </Typography>
-                            <Typography variant="body2" gutterBottom sx={{ 
-                                display: 'flex', 
-                                alignItems: 'center', 
-                                gap: 1,
-                                justifyContent: 'flex-start',
-                                color: '#0d83fd !important',
-                            }}>
-                                <ReceiptIcon fontSize="small" />
-                                <strong>Receipt #:</strong> {receipt.receipt_number || 'Pending'}
-                            </Typography>
-                            {receipt.invoice_number && (
-                                <Typography variant="body2" gutterBottom sx={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
-                                    gap: 1,
-                                    justifyContent: 'flex-start',
-                                    color: '#0d83fd !important',
-                                }}>
-                                    <PaymentIcon fontSize="small" />
-                                    <strong>Invoice #:</strong> {receipt.invoice_number}
-                                </Typography>
-                            )}
-                        </Box>
-                    </Grid>
-                </Grid>
-
-                {/* Payment Details */}
-                <Box sx={{ mb: 4 }}>
-                    <Typography variant="h6" gutterBottom sx={{ color: '#0d83fd !important' }}>
-                        Payment Details
+                    <Typography sx={{ color: '#ff9800 !important', fontWeight: 'bold', fontSize: '16px' }}>
+                    {formatNumberWithComma(receipt.balance)}
                     </Typography>
-                    <Grid container spacing={2}>
-                        <Grid item xs={6}>
-                            <Typography sx={{ color: '#0d83fd !important' }}><strong>Payment Method:</strong></Typography>
-                            <Typography>
-                                {receipt.payment_method ? 
-                                    receipt.payment_method.charAt(0).toUpperCase() + receipt.payment_method.slice(1).replace('_', ' ') 
-                                    : 'Cash'
-                                }
-                            </Typography>
-                        </Grid>
-                        {receipt.transaction_id && (
-                            <Grid item xs={6}>
-                                <Typography sx={{ color: '#0d83fd !important' }}><strong>Transaction ID:</strong></Typography>
-                                <Typography>{receipt.transaction_id}</Typography>
-                            </Grid>
-                        )}
-                        {receipt.bank_name && (
-                            <Grid item xs={6}>
-                                <Typography sx={{ color: '#0d83fd !important' }}><strong>Bank Name:</strong></Typography>
-                                <Typography>{receipt.bank_name}</Typography>
-                            </Grid>
-                        )}
-                        {receipt.check_number && (
-                            <Grid item xs={6}>
-                                <Typography sx={{ color: '#0d83fd !important' }}><strong>Check Number:</strong></Typography>
-                                <Typography>{receipt.check_number}</Typography>
-                            </Grid>
-                        )}
-                        {receipt.mobile_number && (
-                            <Grid item xs={6}>
-                                <Typography sx={{ color: '#0d83fd !important' }}><strong>Mobile Number:</strong></Typography>
-                                <Typography>{receipt.mobile_number}</Typography>
-                            </Grid>
-                        )}
-                        {receipt.received_by && (
-                            <Grid item xs={6}>
-                                <Typography sx={{ color: '#0d83fd !important' }}><strong>Received By:</strong></Typography>
-                                <Typography>{receipt.received_by}</Typography>
-                            </Grid>
-                        )}
-                    </Grid>
                 </Box>
-
-                {/* Payment Items Table */}
-                <TableContainer component={Paper} elevation={forPDF ? 0 : 1} sx={{ mb: 4 }}>
-                    <Table>
-                        <TableHead>
-                            <TableRow sx={{ backgroundColor: '#0d4991 !important' }}>
-                                <TableCell sx={{
-                                    color: 'white !important',
-                                    fontWeight: 'bold',
-                                    border: 1,
-                                    padding: '16px 12px',
-                                    fontSize: '14px',
-                                    borderRight: '2px solid #ffffff !important',
-                                    borderLeft: '2px solid #0d4991 !important',
-                                    borderBottom: '2px solid #0d4991 !important',
-                                    borderTop: '2px solid #0d4991 !important',
-                                }}>
-                                    Description
-                                </TableCell>
-                                <TableCell sx={{
-                                    color: 'white !important',
-                                    fontWeight: 'bold',
-                                    border: 1,
-                                    padding: '16px 12px',
-                                    fontSize: '14px',
-                                    borderRight: '2px solid #0d4991 !important',
-                                    borderBottom: '2px solid #0d4991 !important',
-                                    borderTop: '2px solid #0d4991 !important',
-                                }} align="right">
-                                    Amount
-                                </TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {receipt.items?.map((item, index) => (
-                                <TableRow key={index} sx={{ backgroundColor: '#EFF8FF !important' }}>
-                                    <TableCell sx={{ 
-                                        padding: '12px', 
-                                        color: '#000000 !important',
-                                        borderBottom: '2px solid #0d4991 !important',
-                                        borderLeft: '2px solid #0d4991 !important'
-                                    }}>
-                                        {item.description || 'Payment item'}
-                                    </TableCell>
-                                    <TableCell sx={{ 
-                                        padding: '12px', 
-                                        color: '#000000 !important',
-                                        borderRight: '2px solid #0d4991 !important',
-                                        borderBottom: '2px solid #0d4991 !important',
-                                    }} align="right">
-                                        {formatNumberWithComma(item.amount)}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-
-               {/* Totals Section - Table Style */}
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
-                    <Box sx={{ 
-                        width: 300, 
-                        border: '2px solid #0d4991 !important',
-                        borderRadius: 1,
-                        overflow: 'hidden',
-                        backgroundColor: 'white'
-                    }}>
-                        {/* Table Header */}
-                        <Box sx={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            p: 1.5,
-                            backgroundColor: '#0d4991 !important',
-                            borderBottom: '2px solid #0d4991 !important'
-                        }}>
-                            <Typography sx={{ color: 'white !important', fontWeight: 'bold', fontSize: '16px' }}>
-                                PAYMENT SUMMARY
-                            </Typography>
-                        </Box>
-
-                        {/* Table Rows */}
-                        <Box sx={{ p: 0 }}>
-                            {/* Invoice Total Row */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                p: 1.5,
-                                borderBottom: '1px solid #e0e0e0 !important'
-                            }}>
-                                <Typography sx={{ color: '#0d83fd !important', fontWeight: 'bold' }}>
-                                    Invoice Total:
-                                </Typography>
-                                <Typography sx={{ color: '#0d83fd !important', fontWeight: 'bold' }}>
-                                    {formatNumberWithComma(invoiceTotal || 0)}
-                                </Typography>
-                            </Box>
-                            
-                            {/* Amount Paid Row */}
-                            <Box sx={{ 
-                                display: 'flex', 
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                p: 1.5,
-                                borderBottom: receipt.balance > 0 ? '1px solid #e0e0e0 !important' : '2px solid #0d4991 !important',
-                                backgroundColor: receipt.balance === 0 ? '#f8fff8 !important' : 'transparent'
-                            }}>
-                                <Typography sx={{ color: '#0d83fd !important', fontWeight: 'bold' }}>
-                                    Amount Paid:
-                                </Typography>
-                                <Typography sx={{ color: '#059652 !important', fontWeight: 'bold', fontSize: '18px' }}>
-                                    {formatNumberWithComma(receipt.amount_paid)}
-                                </Typography>
-                            </Box>
-                            
-                            {/* Balance Due Row */}
-                            {receipt.balance > 0 && (
-                                <Box sx={{ 
-                                    display: 'flex', 
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center',
-                                    p: 1.5,
-                                    borderBottom: '2px solid #0d4991 !important',
-                                    backgroundColor: '#fffaf0 !important'
-                                }}>
-                                    <Typography sx={{ color: '#0d83fd !important', fontWeight: 'bold' }}>
-                                        Balance Due:
-                                    </Typography>
-                                    <Typography sx={{ color: '#ff9800 !important', fontWeight: 'bold', fontSize: '16px' }}>
-                                        {formatNumberWithComma(receipt.balance)}
-                                    </Typography>
-                                </Box>
-                            )}
-                        </Box>
-
-                        {/* Payment Status Footer */}
-                        <Box sx={{ 
-                            p: 2,
-                            backgroundColor: receipt.balance === 0 ? '#e8f5e8 !important' : '#fff3e0 !important',
-                            borderTop: receipt.balance > 0 ? '2px solid #0d4991 !important' : 'none'
-                        }}>
-                            <Typography 
-                                variant="h6" 
-                                fontWeight="bold" 
-                                textAlign="center"
-                                sx={{ 
-                                    color: receipt.balance === 0 ? '#059652 !important' : '#ff9800 !important',
-                                }}
-                            >
-                                {receipt.balance === 0 ? 'PAID IN FULL' : 'PARTIAL PAYMENT'}
-                            </Typography>
-                        </Box>
-                    </Box>
-                </Box>
-
-                {/* Notes */}
-                {receipt.notes && (
-                    <Box sx={{ mb: 4 }}>
-                        <Typography variant="h6" gutterBottom sx={{ color: '#0d83fd !important' }}>
-                            Notes
-                        </Typography>
-                        <Paper sx={{ p: 2, backgroundColor: '#f8f9fa !important', border: '1px solid #0d4991 !important' }}>
-                            <Typography variant="body2">{receipt.notes}</Typography>
-                        </Paper>
-                    </Box>
                 )}
-
-                {/* Footer */}
-                <Box sx={{ 
-                    textAlign: 'center', 
-                    mt: 4, 
-                    pt: 3, 
-                    borderTop: '2px dotted', 
-                    borderColor: '#0d83fd !important',
-                }}>
-                    <Typography variant="body2" fontStyle="italic" sx={{ color: '#059652 !important' }}>
-                        {companyInfo.receiptFooter}
-                    </Typography>
-                    <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#0d83fd !important' }}>
-                        This is an official receipt. Please keep it for your records.
-                    </Typography>
-                </Box>
             </Box>
-        );
+
+            {/* Payment Status Footer */}
+            <Box sx={{ 
+                p: 2,
+                backgroundColor: receipt.balance === 0 ? '#e8f5e8 !important' : '#fff3e0 !important',
+                borderTop: receipt.balance > 0 ? '2px solid #0d4991 !important' : 'none'
+            }}>
+                <Typography 
+                variant="h6" 
+                fontWeight="bold" 
+                textAlign="center"
+                sx={{ 
+                    color: receipt.balance === 0 ? '#059652 !important' : '#ff9800 !important',
+                }}
+                >
+                {receipt.balance === 0 ? 'PAID IN FULL' : 'PARTIAL PAYMENT'}
+                </Typography>
+            </Box>
+            </Box>
+        </Box>
+
+        {/* Notes */}
+        {receipt.notes && (
+            <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom sx={{ color: '#0d83fd !important' }}>
+                Notes
+            </Typography>
+            <Paper sx={{ p: 2, backgroundColor: '#f8f9fa !important', border: '1px solid #0d4991 !important' }}>
+                <Typography variant="body2">{receipt.notes}</Typography>
+            </Paper>
+            </Box>
+        )}
+
+        {/* Footer */}
+        <Box sx={{ 
+            textAlign: 'center', 
+            mt: 4, 
+            pt: 3, 
+            borderTop: '2px dotted', 
+            borderColor: '#0d83fd !important',
+        }}>
+            <Typography variant="body2" fontStyle="italic" sx={{ color: '#059652 !important' }}>
+            {companyInfo.receiptFooter}
+            </Typography>
+            <Typography variant="caption" sx={{ mt: 1, display: 'block', color: '#0d83fd !important' }}>
+            This is an official receipt. Please keep it for your records.
+            </Typography>
+        </Box>
+        </Box>
+    );
     };
+
 
 export default Receipt;
